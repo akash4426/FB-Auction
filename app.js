@@ -27,18 +27,63 @@ const showScreen = id => {
 };
 
 // ── SETUP: Build player inputs ───────────────────────────────────
+let playerRowCount = 0;
+
 function buildPlayerInputs() {
   const grid = $('playersGrid');
   grid.innerHTML = '';
-  for (let i = 1; i <= 14; i++) {
-    const wrap = document.createElement('div');
-    wrap.className = 'player-input-wrap';
-    wrap.innerHTML = `
-      <label>Player ${i}</label>
-      <input type="text" id="p${i}" placeholder="Enter name..." maxlength="22"/>
-    `;
-    grid.appendChild(wrap);
+  playerRowCount = 0;
+  // Start with 14 rows by default
+  for (let i = 0; i < 14; i++) addPlayerRow();
+}
+
+function addPlayerRow() {
+  playerRowCount++;
+  const idx = playerRowCount;
+  const grid = $('playersGrid');
+  const wrap = document.createElement('div');
+  wrap.className = 'player-input-wrap';
+  wrap.dataset.rowId = idx;
+  wrap.innerHTML = `
+    <label>Player <span class="row-num">${idx}</span></label>
+    <div class="player-input-row">
+      <input type="text" class="player-name-input" placeholder="Enter name..." maxlength="22"/>
+      <button class="btn-remove-player" onclick="removePlayerRow(this)" title="Remove player">✕</button>
+    </div>
+  `;
+  grid.appendChild(wrap);
+  updatePlayerCountLabel();
+  // Focus new input
+  wrap.querySelector('input').focus();
+}
+
+function removePlayerRow(btn) {
+  const wrap = btn.closest('.player-input-wrap');
+  const grid = $('playersGrid');
+  if (grid.children.length <= 1) {
+    showToast('⚠️ You need at least 1 player!');
+    return;
   }
+  wrap.classList.add('row-removing');
+  setTimeout(() => {
+    wrap.remove();
+    renumberPlayerRows();
+    updatePlayerCountLabel();
+  }, 250);
+}
+
+function renumberPlayerRows() {
+  const rows = $('playersGrid').querySelectorAll('.player-input-wrap');
+  rows.forEach((row, i) => {
+    const numEl = row.querySelector('.row-num');
+    if (numEl) numEl.textContent = i + 1;
+  });
+}
+
+function updatePlayerCountLabel() {
+  const count = $('playersGrid').querySelectorAll('.player-input-wrap').length;
+  const label = $('playerCountLabel');
+  if (label) label.textContent = count;
 }
 
 // ── Particles ────────────────────────────────────────────────────
@@ -67,12 +112,13 @@ function startAuction() {
   STATE.teams[0].players = [];
   STATE.teams[1].players = [];
 
-  // Collect players
+  // Collect players dynamically
   const players = [];
-  for (let i = 1; i <= 14; i++) {
-    const val = $(`p${i}`)?.value.trim() || `Player ${i}`;
+  const inputs = $('playersGrid').querySelectorAll('.player-name-input');
+  inputs.forEach((inp, i) => {
+    const val = inp.value.trim() || `Player ${i + 1}`;
     players.push({ name: val, sold: false, soldTo: -1, price: 0 });
-  }
+  });
   STATE.players = players;
   STATE.currentIdx = 0;
   STATE.unsold = [];
@@ -408,11 +454,8 @@ function abbr(name) {
 
 // ── Shuffle Players ──────────────────────────────────────────────
 function shufflePlayers() {
-  // Collect current values
-  const values = [];
-  for (let i = 1; i <= 14; i++) {
-    values.push($(`p${i}`)?.value ?? '');
-  }
+  const inputs = Array.from($('playersGrid').querySelectorAll('.player-name-input'));
+  const values = inputs.map(inp => inp.value);
 
   // Fisher-Yates shuffle
   for (let i = values.length - 1; i > 0; i--) {
@@ -420,11 +463,7 @@ function shufflePlayers() {
     [values[i], values[j]] = [values[j], values[i]];
   }
 
-  // Write back
-  for (let i = 1; i <= 14; i++) {
-    const inp = $(`p${i}`);
-    if (inp) inp.value = values[i - 1];
-  }
+  inputs.forEach((inp, i) => { inp.value = values[i]; });
 
   // Animate button & show hint
   const btn = $('shuffleBtn');

@@ -39,7 +39,12 @@
           </div>
         </div>
 
-        <h2 class="card-title" style="margin-top:2rem">Player Roster (14 Players)</h2>
+        <div class="roster-header">
+          <h2 class="card-title" style="margin-top:2rem">Player Roster (<span id="playerCountLabel">1</span> Players)</h2>
+          <button class="btn-add-player" id="addPlayerBtn" onclick="addPlayerRow()">
+            <span>＋ Add Player</span>
+          </button>
+        </div>
         <div class="players-grid" id="playersGrid"></div>
         <div class="shuffle-row">
           <button class="btn-shuffle" id="shuffleBtn" onclick="shufflePlayers()">
@@ -181,6 +186,11 @@
 
   <!-- Notification Toast -->
   <div class="toast" id="toast"></div>
+
+  <!-- Footer -->
+  <footer class="creator-footer">
+    <p>Created by <a href="https://github.com/akash4426" target="_blank" rel="noopener noreferrer" class="creator-link">Akash Reddy</a></p>
+  </footer>
 
   <script src="app.js"></script>
 </body>
